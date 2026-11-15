@@ -1,0 +1,21 @@
+# Ejecutables y binarios
+bin/*.exe
+bin/*.out
+bin/mafia_sucesion
+*.o
+*.obj
+*.a
+*.lib
+
+# Salidas de compilacion
+*.gch
+gmon.out
+
+# Editores
+.vscode/
+.vs/
+*.user
+
+# Sistema
+Thumbs.db
+.DS_Store
