@@ -4,9 +4,10 @@ Prototipo en C++ para administrar la sucesión del jefe de una familia a partir 
 un archivo CSV. Cada integrante es un nodo de un **árbol binario**: el hijo
 izquierdo es el primer sucesor y el hijo derecho el segundo.
 
-> **Estado:** fase 1 de la infraestructura. Ya están la estructura del proyecto,
-> el modelo de persona y las utilidades de texto. Faltan el lector de CSV, el
-> árbol, el motor de sucesión y el menú.
+> **Estado:** fase 2 de la infraestructura. Ya están la estructura del proyecto,
+> el modelo de persona, las utilidades de texto y el lector de CSV con sus
+> validaciones. Faltan el árbol, el índice, los recorridos, el `main` final y el
+> menú.
 
 ---
 
@@ -20,10 +21,11 @@ Casa-Nostra/
 ├── compilar.bat
 ├── bin/
 │   ├── .gitkeep
-│   ├── datos.csv          <- (pendiente) datos de prueba
+│   ├── datos.csv          <- datos de prueba base
 │   └── mafia_sucesion.exe <- se genera al compilar
 └── src/
     ├── main.cpp
+    ├── csv.h / csv.cpp
     ├── persona.h / persona.cpp
     └── util.h / util.cpp
 ```
@@ -59,13 +61,13 @@ make
 ### Compilación directa
 
 ```bash
-g++ -std=c++17 -Wall -Wextra -O2 -static src/main.cpp src/persona.cpp src/util.cpp -o bin/mafia_sucesion.exe
+g++ -std=c++17 -Wall -Wextra -O2 -static src/main.cpp src/persona.cpp src/util.cpp src/csv.cpp -o bin/mafia_sucesion.exe
 ```
 
 > En Windows se usa `-static` para no depender de las DLL de MinGW al ejecutar.
 
-> Por ahora `main.cpp` es una prueba de humo de la fase 1. En la siguiente fase
-> cargará `bin/datos.csv` y arrancará el menú.
+> `main.cpp` ya carga y valida `bin/datos.csv` y lista las personas. Admite una
+> ruta alternativa: `bin\mafia_sucesion.exe otra_ruta.csv`.
 
 ---
 
@@ -138,16 +140,42 @@ No se usan contenedores de la STL.
 
 ---
 
+## Lector de CSV (`csv.h`)
+
+```cpp
+struct ListaPersonas {
+    Persona** datos;
+    int cantidad;
+    int capacidad;
+};
+
+void inicializarLista(ListaPersonas&);
+void liberarLista(ListaPersonas&);
+bool cargarCSV(const char* ruta, ListaPersonas& lista, char* error, int tamError);
+```
+
+`cargarCSV` valida:
+
+- encabezado y cantidad de columnas;
+- tipos y rangos (`age` 0–120, `gender` H/M, booleanos 0/1);
+- IDs únicos y positivos;
+- exactamente un `is_boss = 1` y una raíz (`id_boss = 0`);
+- jefe existente, máximo 2 hijos por jefe y ausencia de ciclos.
+
+Los errores se informan con el número de línea. `ListaPersonas` es la dueña de
+los objetos `Persona` y se libera con `liberarLista`.
+
+---
+
 ## División del trabajo
 
 ### Infraestructura (en curso)
 
 - Estructura `bin/` + `src/`, build y `.gitignore`.
 - Modelo `Persona` y utilidades de texto.
-- **Pendiente:** lector y validador de CSV.
+- Lector y validador de CSV, con `bin/datos.csv` base.
 - **Pendiente:** construcción del árbol, índice por id y recorridos.
 - **Pendiente:** `main.cpp` final y `menu.h`/stub.
-- **Pendiente:** `bin/datos.csv` base.
 
 ### Menú y lógica (compañero)
 
@@ -178,4 +206,4 @@ supuestos y la tabla de escenarios.)_
 ## Integrantes
 
 - Jose Bello (@Jose2Bello)
-- _(compañero: completar nombre y usuario)_
+- Sebastián Asleben
