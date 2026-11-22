@@ -1,20 +1,7 @@
 #include "arbol.h"
 
-#include <cstdarg>
-#include <cstdio>
 #include <iostream>
-
-// ---------------------------------------------------------------------------
-// Mensajes de error
-// ---------------------------------------------------------------------------
-static void ponerError(char* destino, int tam, const char* formato, ...) {
-    if (destino == nullptr || tam <= 0) return;
-
-    va_list argumentos;
-    va_start(argumentos, formato);
-    std::vsnprintf(destino, tam, formato, argumentos);
-    va_end(argumentos);
-}
+#include <string>
 
 // ---------------------------------------------------------------------------
 // Indice ordenado por id (insercion, sin contenedores de la STL)
@@ -67,9 +54,9 @@ Persona* buscarPorId(const ArbolFamilia& arbol, int id) {
 // Construccion del arbol
 // ---------------------------------------------------------------------------
 bool construirArbol(ListaPersonas& lista, ArbolFamilia& arbol,
-                    char* error, int tamError) {
+                    std::string& error) {
     if (lista.cantidad == 0) {
-        ponerError(error, tamError, "No hay personas para construir el arbol");
+        error = "No hay personas para construir el arbol";
         return false;
     }
 
@@ -91,7 +78,7 @@ bool construirArbol(ListaPersonas& lista, ArbolFamilia& arbol,
     }
 
     if (raiz == nullptr) {
-        ponerError(error, tamError, "No se encontro la raiz (id_boss=0)");
+        error = "No se encontro la raiz (id_boss=0)";
         liberarArbol(arbol);
         return false;
     }
@@ -102,9 +89,9 @@ bool construirArbol(ListaPersonas& lista, ArbolFamilia& arbol,
 
         Persona* jefe = buscarPorId(arbol, persona->id_boss);
         if (jefe == nullptr) {
-            ponerError(error, tamError,
-                       "La persona %d tiene un jefe inexistente (%d)",
-                       persona->id, persona->id_boss);
+            error = "La persona " + std::to_string(persona->id) +
+                    " tiene un jefe inexistente (" +
+                    std::to_string(persona->id_boss) + ")";
             liberarArbol(arbol);
             return false;
         }
@@ -114,8 +101,8 @@ bool construirArbol(ListaPersonas& lista, ArbolFamilia& arbol,
         } else if (jefe->der == nullptr) {
             jefe->der = persona;
         } else {
-            ponerError(error, tamError,
-                       "El jefe %d tiene mas de 2 sucesores", jefe->id);
+            error = "El jefe " + std::to_string(jefe->id) +
+                    " tiene mas de 2 sucesores";
             liberarArbol(arbol);
             return false;
         }

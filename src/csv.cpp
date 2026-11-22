@@ -1,7 +1,5 @@
 #include "csv.h"
 
-#include <cstdarg>
-#include <cstdio>
 #include <fstream>
 #include <string>
 
@@ -13,18 +11,6 @@ static const char* ENCABEZADO[COLUMNAS] = {
     "id", "name", "last_name", "gender", "age",
     "id_boss", "is_dead", "in_jail", "was_boss", "is_boss"
 };
-
-// ---------------------------------------------------------------------------
-// Mensajes de error
-// ---------------------------------------------------------------------------
-static void ponerError(char* destino, int tam, const char* formato, ...) {
-    if (destino == nullptr || tam <= 0) return;
-
-    va_list argumentos;
-    va_start(argumentos, formato);
-    std::vsnprintf(destino, tam, formato, argumentos);
-    va_end(argumentos);
-}
 
 // ---------------------------------------------------------------------------
 // Lista dinamica de personas
@@ -73,22 +59,21 @@ static int buscarIndicePorId(const ListaPersonas& lista, int id) {
 // ---------------------------------------------------------------------------
 // Encabezado
 // ---------------------------------------------------------------------------
-static bool validarEncabezado(const std::string& linea, char* error, int tamError) {
+static bool validarEncabezado(const std::string& linea, std::string& error) {
     std::string campos[MAX_CAMPOS_CSV];
     int cantidad = dividirCSV(linea, campos, MAX_CAMPOS_CSV);
 
     if (cantidad != COLUMNAS) {
-        ponerError(error, tamError,
-                   "El encabezado debe tener %d columnas y tiene %d",
-                   COLUMNAS, cantidad);
+        error = "El encabezado debe tener " + std::to_string(COLUMNAS) +
+                " columnas y tiene " + std::to_string(cantidad);
         return false;
     }
 
     for (int i = 0; i < COLUMNAS; i++) {
         if (aMinusculas(campos[i]) != ENCABEZADO[i]) {
-            ponerError(error, tamError,
-                       "Encabezado invalido: se esperaba '%s' en la columna %d",
-                       ENCABEZADO[i], i + 1);
+            error = "Encabezado invalido: se esperaba '" +
+                    std::string(ENCABEZADO[i]) + "' en la columna " +
+                    std::to_string(i + 1);
             return false;
         }
     }
@@ -100,14 +85,14 @@ static bool validarEncabezado(const std::string& linea, char* error, int tamErro
 // Una fila del CSV
 // ---------------------------------------------------------------------------
 static bool parsearPersona(const std::string& linea, int numeroLinea,
-                           Persona*& salida, char* error, int tamError) {
+                           Persona*& salida, std::string& error) {
     std::string campos[MAX_CAMPOS_CSV];
     int cantidad = dividirCSV(linea, campos, MAX_CAMPOS_CSV);
 
     if (cantidad != COLUMNAS) {
-        ponerError(error, tamError,
-                   "Linea %d: se esperaban %d columnas y se encontraron %d",
-                   numeroLinea, COLUMNAS, cantidad);
+        error = "Linea " + std::to_string(numeroLinea) + ": se esperaban " +
+                std::to_string(COLUMNAS) + " columnas y se encontraron " +
+                std::to_string(cantidad);
         return false;
     }
 
@@ -115,8 +100,8 @@ static bool parsearPersona(const std::string& linea, int numeroLinea,
     bool valida = true;
 
     if (!convertirEntero(campos[0], persona->id) || persona->id <= 0) {
-        ponerError(error, tamError,
-                   "Linea %d: el id debe ser un entero positivo", numeroLinea);
+        error = "Linea " + std::to_string(numeroLinea) +
+                ": el id debe ser un entero positivo";
         valida = false;
     }
 
@@ -124,64 +109,61 @@ static bool parsearPersona(const std::string& linea, int numeroLinea,
         persona->name = trim(campos[1]);
         persona->last_name = trim(campos[2]);
         if (persona->name.empty() || persona->last_name.empty()) {
-            ponerError(error, tamError,
-                       "Linea %d: name y last_name no pueden estar vacios",
-                       numeroLinea);
+            error = "Linea " + std::to_string(numeroLinea) +
+                    ": name y last_name no pueden estar vacios";
             valida = false;
         }
     }
 
     if (valida && !convertirGenero(campos[3], persona->gender)) {
-        ponerError(error, tamError,
-                   "Linea %d: gender debe ser H o M", numeroLinea);
+        error = "Linea " + std::to_string(numeroLinea) +
+                ": gender debe ser H o M";
         valida = false;
     }
 
     if (valida &&
         (!convertirEntero(campos[4], persona->age) ||
          persona->age < 0 || persona->age > 120)) {
-        ponerError(error, tamError,
-                   "Linea %d: age debe estar entre 0 y 120", numeroLinea);
+        error = "Linea " + std::to_string(numeroLinea) +
+                ": age debe estar entre 0 y 120";
         valida = false;
     }
 
     if (valida &&
         (!convertirEntero(campos[5], persona->id_boss) ||
          persona->id_boss < 0)) {
-        ponerError(error, tamError,
-                   "Linea %d: id_boss debe ser un entero no negativo",
-                   numeroLinea);
+        error = "Linea " + std::to_string(numeroLinea) +
+                ": id_boss debe ser un entero no negativo";
         valida = false;
     }
 
     if (valida && persona->id_boss == persona->id) {
-        ponerError(error, tamError,
-                   "Linea %d: una persona no puede ser su propio jefe",
-                   numeroLinea);
+        error = "Linea " + std::to_string(numeroLinea) +
+                ": una persona no puede ser su propio jefe";
         valida = false;
     }
 
     if (valida && !convertirBooleano(campos[6], persona->is_dead)) {
-        ponerError(error, tamError,
-                   "Linea %d: is_dead debe ser 0 o 1", numeroLinea);
+        error = "Linea " + std::to_string(numeroLinea) +
+                ": is_dead debe ser 0 o 1";
         valida = false;
     }
 
     if (valida && !convertirBooleano(campos[7], persona->in_jail)) {
-        ponerError(error, tamError,
-                   "Linea %d: in_jail debe ser 0 o 1", numeroLinea);
+        error = "Linea " + std::to_string(numeroLinea) +
+                ": in_jail debe ser 0 o 1";
         valida = false;
     }
 
     if (valida && !convertirBooleano(campos[8], persona->was_boss)) {
-        ponerError(error, tamError,
-                   "Linea %d: was_boss debe ser 0 o 1", numeroLinea);
+        error = "Linea " + std::to_string(numeroLinea) +
+                ": was_boss debe ser 0 o 1";
         valida = false;
     }
 
     if (valida && !convertirBooleano(campos[9], persona->is_boss)) {
-        ponerError(error, tamError,
-                   "Linea %d: is_boss debe ser 0 o 1", numeroLinea);
+        error = "Linea " + std::to_string(numeroLinea) +
+                ": is_boss debe ser 0 o 1";
         valida = false;
     }
 
@@ -197,7 +179,7 @@ static bool parsearPersona(const std::string& linea, int numeroLinea,
 // ---------------------------------------------------------------------------
 // Relaciones: jefe existente, maximo 2 hijos y sin ciclos
 // ---------------------------------------------------------------------------
-static bool validarRelaciones(const ListaPersonas& lista, char* error, int tamError) {
+static bool validarRelaciones(const ListaPersonas& lista, std::string& error) {
     int* hijos = new int[lista.cantidad];
     for (int i = 0; i < lista.cantidad; i++) hijos[i] = 0;
 
@@ -207,18 +189,17 @@ static bool validarRelaciones(const ListaPersonas& lista, char* error, int tamEr
 
         int indiceJefe = buscarIndicePorId(lista, persona->id_boss);
         if (indiceJefe == -1) {
-            ponerError(error, tamError,
-                       "La persona %d tiene un jefe inexistente (id_boss=%d)",
-                       persona->id, persona->id_boss);
+            error = "La persona " + std::to_string(persona->id) +
+                    " tiene un jefe inexistente (id_boss=" +
+                    std::to_string(persona->id_boss) + ")";
             delete[] hijos;
             return false;
         }
 
         hijos[indiceJefe]++;
         if (hijos[indiceJefe] > 2) {
-            ponerError(error, tamError,
-                       "El jefe %d tiene mas de 2 sucesores",
-                       lista.datos[indiceJefe]->id);
+            error = "El jefe " + std::to_string(lista.datos[indiceJefe]->id) +
+                    " tiene mas de 2 sucesores";
             delete[] hijos;
             return false;
         }
@@ -235,9 +216,8 @@ static bool validarRelaciones(const ListaPersonas& lista, char* error, int tamEr
 
             pasos++;
             if (pasos > lista.cantidad) {
-                ponerError(error, tamError,
-                           "Ciclo detectado en id_boss (persona %d)",
-                           lista.datos[i]->id);
+                error = "Ciclo detectado en id_boss (persona " +
+                        std::to_string(lista.datos[i]->id) + ")";
                 delete[] hijos;
                 return false;
             }
@@ -252,20 +232,20 @@ static bool validarRelaciones(const ListaPersonas& lista, char* error, int tamEr
 // ---------------------------------------------------------------------------
 // Carga principal
 // ---------------------------------------------------------------------------
-bool cargarCSV(const char* ruta, ListaPersonas& lista, char* error, int tamError) {
-    if (error != nullptr && tamError > 0) error[0] = '\0';
+bool cargarCSV(const char* ruta, ListaPersonas& lista, std::string& error) {
+    error.clear();
 
     if (lista.datos == nullptr) inicializarLista(lista);
 
     std::ifstream archivo(ruta);
     if (!archivo.is_open()) {
-        ponerError(error, tamError, "No se pudo abrir el archivo: %s", ruta);
+        error = "No se pudo abrir el archivo: " + std::string(ruta);
         return false;
     }
 
     std::string linea;
     if (!std::getline(archivo, linea)) {
-        ponerError(error, tamError, "El archivo CSV esta vacio");
+        error = "El archivo CSV esta vacio";
         archivo.close();
         return false;
     }
@@ -279,12 +259,12 @@ bool cargarCSV(const char* ruta, ListaPersonas& lista, char* error, int tamError
     }
 
     if (trim(linea).empty()) {
-        ponerError(error, tamError, "El archivo CSV esta vacio");
+        error = "El archivo CSV esta vacio";
         archivo.close();
         return false;
     }
 
-    if (!validarEncabezado(linea, error, tamError)) {
+    if (!validarEncabezado(linea, error)) {
         archivo.close();
         return false;
     }
@@ -299,15 +279,15 @@ bool cargarCSV(const char* ruta, ListaPersonas& lista, char* error, int tamError
         if (trim(linea).empty()) continue;   // lineas en blanco
 
         Persona* persona = nullptr;
-        if (!parsearPersona(linea, numeroLinea, persona, error, tamError)) {
+        if (!parsearPersona(linea, numeroLinea, persona, error)) {
             liberarLista(lista);
             archivo.close();
             return false;
         }
 
         if (buscarIndicePorId(lista, persona->id) != -1) {
-            ponerError(error, tamError,
-                       "Linea %d: id duplicado (%d)", numeroLinea, persona->id);
+            error = "Linea " + std::to_string(numeroLinea) +
+                    ": id duplicado (" + std::to_string(persona->id) + ")";
             delete persona;
             liberarLista(lista);
             archivo.close();
@@ -325,28 +305,26 @@ bool cargarCSV(const char* ruta, ListaPersonas& lista, char* error, int tamError
     archivo.close();
 
     if (lista.cantidad == 0) {
-        ponerError(error, tamError, "El CSV no contiene personas");
+        error = "El CSV no contiene personas";
         liberarLista(lista);
         return false;
     }
 
     if (jefes != 1) {
-        ponerError(error, tamError,
-                   "Debe haber exactamente un is_boss=1 (se encontraron %d)",
-                   jefes);
+        error = "Debe haber exactamente un is_boss=1 (se encontraron " +
+                std::to_string(jefes) + ")";
         liberarLista(lista);
         return false;
     }
 
     if (raices != 1) {
-        ponerError(error, tamError,
-                   "Debe haber exactamente una raiz con id_boss=0 (se encontraron %d)",
-                   raices);
+        error = "Debe haber exactamente una raiz con id_boss=0 (se encontraron " +
+                std::to_string(raices) + ")";
         liberarLista(lista);
         return false;
     }
 
-    if (!validarRelaciones(lista, error, tamError)) {
+    if (!validarRelaciones(lista, error)) {
         liberarLista(lista);
         return false;
     }

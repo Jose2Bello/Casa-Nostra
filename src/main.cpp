@@ -1,7 +1,9 @@
 #include <iostream>
+#include <string>
 
 #include "arbol.h"
 #include "csv.h"
+#include "menu.h"
 
 // Punto de entrada temporal de la infraestructura.
 // Carga el CSV, construye el arbol y muestra recorridos/busquedas.
@@ -12,8 +14,8 @@ int main(int argc, char* argv[]) {
     ListaPersonas lista;
     inicializarLista(lista);
 
-    char error[256];
-    if (!cargarCSV(ruta, lista, error, static_cast<int>(sizeof(error)))) {
+    std::string error;
+    if (!cargarCSV(ruta, lista, error)) {
         std::cout << "Error al cargar el CSV:\n  " << error << "\n";
         liberarLista(lista);
         return 1;
@@ -22,7 +24,7 @@ int main(int argc, char* argv[]) {
     ArbolFamilia arbol;
     inicializarArbol(arbol);
 
-    if (!construirArbol(lista, arbol, error, static_cast<int>(sizeof(error)))) {
+    if (!construirArbol(lista, arbol, error)) {
         std::cout << "Error al construir el arbol:\n  " << error << "\n";
         liberarArbol(arbol);
         liberarLista(lista);
@@ -57,7 +59,8 @@ int main(int argc, char* argv[]) {
                       : -1)
               << "\n";
 
-    std::cout << "\nTODO: llamar a ejecutarMenu(arbol).\n";
+    std::cout << "\n";
+    ejecutarMenu(arbol);
 
     liberarArbol(arbol);
     liberarLista(lista);

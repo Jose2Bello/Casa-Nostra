@@ -1,6 +1,8 @@
 #ifndef ARBOL_H
 #define ARBOL_H
 
+#include <string>
+
 #include "csv.h"
 #include "persona.h"
 
@@ -19,7 +21,7 @@ void liberarArbol(ArbolFamilia& arbol);
 // primer sucesor -> izq, segundo sucesor -> der.
 // La lista debe haber sido validada por cargarCSV.
 bool construirArbol(ListaPersonas& lista, ArbolFamilia& arbol,
-                    char* error, int tamError);
+                    std::string& error);
 
 // Busqueda binaria sobre el indice ordenado por id.
 Persona* buscarPorId(const ArbolFamilia& arbol, int id);

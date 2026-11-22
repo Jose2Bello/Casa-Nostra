@@ -1,6 +1,8 @@
 #ifndef CSV_H
 #define CSV_H
 
+#include <string>
+
 #include "persona.h"
 
 // Arreglo dinamico de personas cargadas desde el CSV.
@@ -17,6 +19,6 @@ void liberarLista(ListaPersonas& lista);
 // Carga y valida el archivo CSV indicado.
 // Devuelve true si todo esta correcto. Si falla, deja el motivo en `error`
 // y libera lo que haya reservado.
-bool cargarCSV(const char* ruta, ListaPersonas& lista, char* error, int tamError);
+bool cargarCSV(const char* ruta, ListaPersonas& lista, std::string& error);
 
 #endif
