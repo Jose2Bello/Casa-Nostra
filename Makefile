@@ -1,7 +1,7 @@
 CXX      = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -O2 -static
 
-SRC    = src/main.cpp src/persona.cpp src/util.cpp src/csv.cpp
+SRC    = src/main.cpp src/persona.cpp src/util.cpp src/csv.cpp src/arbol.cpp src/menu.cpp
 TARGET = bin/mafia_sucesion.exe
 
 all: $(TARGET)
