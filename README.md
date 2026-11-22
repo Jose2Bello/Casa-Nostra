@@ -4,10 +4,9 @@ Prototipo en C++ para administrar la sucesión del jefe de una familia a partir 
 un archivo CSV. Cada integrante es un nodo de un **árbol binario**: el hijo
 izquierdo es el primer sucesor y el hijo derecho el segundo.
 
-> **Estado:** fase 3 de la infraestructura. Ya están la estructura, el modelo de
-> persona, las utilidades, el lector de CSV, el árbol con su índice y los
-> recorridos. Falta el `main` final con el menú y la integración con el motor de
-> sucesión.
+> **Estado:** infraestructura integrada. Ya están estructura, modelo, utilidades,
+> CSV, árbol, índice, recorridos y `main` conectado a `ejecutarMenu`. Falta que el
+> compañero implemente el menú y el motor de sucesión.
 
 ---
 
@@ -41,6 +40,8 @@ Todo el código va en `src/`; el ejecutable y los datos van en `bin/`.
 - `g++` con soporte de C++17.
 - Windows: `compilar.bat` o `mingw32-make`.
 - Linux/macOS: `make`.
+- Solo biblioteca estándar: `<iostream>`, `<fstream>`, `<string>` y `<cctype>`.
+  Sin librerías externas ni contenedores de la STL.
 
 ---
 
@@ -154,7 +155,7 @@ struct ListaPersonas {
 
 void inicializarLista(ListaPersonas&);
 void liberarLista(ListaPersonas&);
-bool cargarCSV(const char* ruta, ListaPersonas& lista, char* error, int tamError);
+bool cargarCSV(const char* ruta, ListaPersonas& lista, std::string& error);
 ```
 
 `cargarCSV` valida:
@@ -181,7 +182,7 @@ struct ArbolFamilia {
 
 void inicializarArbol(ArbolFamilia&);
 void liberarArbol(ArbolFamilia&);
-bool construirArbol(ListaPersonas&, ArbolFamilia&, char* error, int tamError);
+bool construirArbol(ListaPersonas&, ArbolFamilia&, std::string& error);
 Persona* buscarPorId(const ArbolFamilia&, int id);
 
 void mostrarPreOrden(const ArbolFamilia&);
@@ -208,8 +209,8 @@ Orden de liberación: primero `liberarArbol` y después `liberarLista`.
 - Modelo `Persona` y utilidades de texto.
 - Lector y validador de CSV, con `bin/datos.csv` base.
 - Árbol binario, índice por id y recorridos.
-- **Pendiente:** `main.cpp` final con `ejecutarMenu` y la integración.
-- **Pendiente:** reemplazar el stub de `menu.cpp` (lo hace el compañero).
+- `main.cpp` conectado a `ejecutarMenu`.
+- **Pendiente:** reemplazar el stub de `menu.cpp` y conectar el motor de sucesión.
 
 ### Menú y lógica (compañero)
 
