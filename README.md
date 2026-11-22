@@ -4,10 +4,10 @@ Prototipo en C++ para administrar la sucesión del jefe de una familia a partir 
 un archivo CSV. Cada integrante es un nodo de un **árbol binario**: el hijo
 izquierdo es el primer sucesor y el hijo derecho el segundo.
 
-> **Estado:** fase 2 de la infraestructura. Ya están la estructura del proyecto,
-> el modelo de persona, las utilidades de texto y el lector de CSV con sus
-> validaciones. Faltan el árbol, el índice, los recorridos, el `main` final y el
-> menú.
+> **Estado:** fase 3 de la infraestructura. Ya están la estructura, el modelo de
+> persona, las utilidades, el lector de CSV, el árbol con su índice y los
+> recorridos. Falta el `main` final con el menú y la integración con el motor de
+> sucesión.
 
 ---
 
@@ -25,7 +25,9 @@ Casa-Nostra/
 │   └── mafia_sucesion.exe <- se genera al compilar
 └── src/
     ├── main.cpp
+    ├── arbol.h / arbol.cpp
     ├── csv.h / csv.cpp
+    ├── menu.h / menu.cpp
     ├── persona.h / persona.cpp
     └── util.h / util.cpp
 ```
@@ -61,13 +63,14 @@ make
 ### Compilación directa
 
 ```bash
-g++ -std=c++17 -Wall -Wextra -O2 -static src/main.cpp src/persona.cpp src/util.cpp src/csv.cpp -o bin/mafia_sucesion.exe
+g++ -std=c++17 -Wall -Wextra -O2 -static src/main.cpp src/persona.cpp src/util.cpp src/csv.cpp src/arbol.cpp src/menu.cpp -o bin/mafia_sucesion.exe
 ```
 
 > En Windows se usa `-static` para no depender de las DLL de MinGW al ejecutar.
 
-> `main.cpp` ya carga y valida `bin/datos.csv` y lista las personas. Admite una
-> ruta alternativa: `bin\mafia_sucesion.exe otra_ruta.csv`.
+> `main.cpp` ya carga y valida `bin/datos.csv`, construye el árbol y muestra los
+> recorridos y búsquedas. Admite una ruta alternativa:
+> `bin\mafia_sucesion.exe otra_ruta.csv`. El menú está pendiente.
 
 ---
 
@@ -167,6 +170,36 @@ los objetos `Persona` y se libera con `liberarLista`.
 
 ---
 
+## Árbol (`arbol.h`)
+
+```cpp
+struct ArbolFamilia {
+    Persona* raiz;
+    Persona** indice;   // punteros ordenados por id
+    int cantidad;
+};
+
+void inicializarArbol(ArbolFamilia&);
+void liberarArbol(ArbolFamilia&);
+bool construirArbol(ListaPersonas&, ArbolFamilia&, char* error, int tamError);
+Persona* buscarPorId(const ArbolFamilia&, int id);
+
+void mostrarPreOrden(const ArbolFamilia&);
+void mostrarInOrden(const ArbolFamilia&);
+void mostrarPostOrden(const ArbolFamilia&);
+void mostrarPorNiveles(const ArbolFamilia&);
+```
+
+`construirArbol` enlaza `izq` y `der` en el orden del CSV (primer sucesor a la
+izquierda, segundo a la derecha) y rellena el puntero `padre`. El índice se
+ordena por id y `buscarPorId` usa búsqueda binaria.
+
+**Propiedad de memoria:** `ListaPersonas` es dueña de los objetos `Persona`;
+`ArbolFamilia` solo guarda punteros. `liberarArbol` libera únicamente el índice.
+Orden de liberación: primero `liberarArbol` y después `liberarLista`.
+
+---
+
 ## División del trabajo
 
 ### Infraestructura (en curso)
@@ -174,8 +207,9 @@ los objetos `Persona` y se libera con `liberarLista`.
 - Estructura `bin/` + `src/`, build y `.gitignore`.
 - Modelo `Persona` y utilidades de texto.
 - Lector y validador de CSV, con `bin/datos.csv` base.
-- **Pendiente:** construcción del árbol, índice por id y recorridos.
-- **Pendiente:** `main.cpp` final y `menu.h`/stub.
+- Árbol binario, índice por id y recorridos.
+- **Pendiente:** `main.cpp` final con `ejecutarMenu` y la integración.
+- **Pendiente:** reemplazar el stub de `menu.cpp` (lo hace el compañero).
 
 ### Menú y lógica (compañero)
 
