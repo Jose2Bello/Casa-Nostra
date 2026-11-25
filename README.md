@@ -4,8 +4,10 @@ Prototipo en C++ para administrar la sucesión del jefe de una familia a partir 
 un archivo CSV. Cada integrante es un nodo de un **árbol binario**: el hijo
 izquierdo es el primer sucesor y el hijo derecho el segundo.
 
-> **Estado:** proyecto completo. Infraestructura, motor de sucesión (`sucesion.h/.cpp`),
-> menú interactivo (`menu.cpp`) y datos de prueba finales (`bin/datos.csv`) integrados.
+> **Estado:** proyecto completo y verificado. Infraestructura, motor de sucesión
+> (`sucesion.h/.cpp`), menú interactivo (`menu.cpp`) y datos de prueba
+> (`bin/datos.csv`) integrados. Las ediciones se mantienen en memoria durante la
+> ejecución; el CSV no se reescribe.
 
 ---
 
@@ -219,13 +221,17 @@ std::string revisar_sucesion(ArbolFamilia&);
 
 El menú interactivo (`ejecutarMenu`) ofrece las opciones:
 
-1. Ver jefe actual (normal, interino en cárcel o estado R7 sin jefe).
+1. Ver jefe actual (normal, interino en cárcel o sin jefe).
 2. Ver árbol familiar (estructura jerárquica y los 4 recorridos).
 3. Ver línea de sucesión (elegibles libres o candidatos interinos).
 4. Buscar integrante por ID.
-5. Editar integrante (todos los campos excepto `id` e `id_boss`, con validación y disparo automático de sucesión).
+5. Editar integrante: nombre, apellido, género, edad, `is_dead`, `in_jail`,
+   `was_boss` e `is_boss` (nunca `id` ni `id_boss`).
 6. Forzar revisión de sucesión.
 0. Salir.
+
+Al editar `age`, `is_dead` o `in_jail` se dispara la revisión automática. Si se
+pone `is_boss = 0` al jefe, la familia queda sin jefe hasta usar la opción 6.
 
 ---
 
@@ -247,40 +253,74 @@ El menú interactivo (`ejecutarMenu`) ofrece las opciones:
 - Edición de personas con validación (todo menos `id` e `id_boss`), normalización de `is_boss` y disparadores automáticos.
 - Datos de prueba finales (10 personas en `bin/datos.csv`) y documentación de reglas/escenarios.
 
+### Ajustes finales de integración
+
+- Búsqueda por ámbitos R1–R5, fase de presos por cercanía R6 y corrección del caso `is_boss = 0`.
+- Limpieza del arranque y actualización de reglas/escenarios.
+
 ---
 
 ## Reglas de sucesión
 
-El motor (`src/sucesion.h` / `src/sucesion.cpp`) aplica las reglas **R1–R7** con `EDAD_MAXIMA_JEFE = 70`:
+El motor aplica esta formalización de las reglas del enunciado, con
+`EDAD_MAXIMA_JEFE = 70`.
 
-| Regla | Nombre | Definición implementada |
+### Definiciones
+
+- **Elegible libre:** vivo, no preso, edad ≤ 70.
+- **Elegible interino:** vivo, preso, edad ≤ 70.
+- **Primer sucesor:** recorrido pre-orden, izquierda primero.
+- **Compañero sucesor:** el otro hijo del padre del jefe.
+- **Jefe anterior:** el padre; **jefe del jefe:** el abuelo.
+
+Disparadores: muerte, cárcel o edad > 70 del jefe actual. Si el jefe sigue vivo,
+libre y con edad ≤ 70, conserva el cargo.
+
+### Orden de búsqueda
+
+| Regla | Condición | Acción |
 |---|---|---|
-| **R1** | Orden de sucesión | Pre-orden cíclico desde el jefe actual (excluyendo al jefe actual): primero su subárbol, luego ramas hermanas y finalmente los ancestros al dar la vuelta. Si no hay jefe (`R7`), recorre en pre-orden desde la raíz. |
-| **R2** | Elegibilidad | Libre elegible: `estaVivo && !in_jail && age <= 70`. Muertos (`is_dead=1`) y mayores de 70 años quedan fuera de toda sucesión. Los presos (`in_jail=1`) quedan fuera de la línea regular y solo cuentan para interinato. `was_boss` es histórico y **nunca** excluye. |
-| **R3** | Sucesión normal | Si el jefe actual deja de ser elegible (muerte, cárcel o `age > 70`) y existe al menos un candidato libre elegible, asume el primero de la línea R1. |
-| **R4** | Interinato | Si no hay ningún candidato libre elegible, asume el primer integrante en pre-orden cíclico que esté vivo, en la cárcel y con `age <= 70`. El interino preso se identifica con `is_boss && in_jail`. Si un jefe libre cae preso y no hay reemplazo libre, conserva el mando como interino desde la cárcel siempre que siga vivo y `<= 70`. |
-| **R5** | Relevo | Cuando el jefe es un interino preso (`is_boss && in_jail`), en la próxima revisión entrega el cargo automáticamente al primer candidato libre elegible (por ejemplo, si alguien sale de la cárcel). |
-| **R6** | Disparadores | La revisión se dispara automáticamente al editar `age`, `is_dead`, `in_jail` o `is_boss`, al normalizar el estado inicial al arrancar el menú si el jefe cargado no es elegible, y manualmente desde la opción *"Forzar revisión de sucesión"*. |
-| **R7** | Sin sucesor | Si no hay candidatos libres ni interinos y el jefe actual murió o superó los 70 años, se limpia `is_boss` (`was_boss=1, is_boss=0` para el saliente). Nadie queda con `is_boss=1`, se informa la situación y se reintenta en futuras ediciones o revisiones. |
+| **R1** | El jefe tiene sucesores | Primer elegible libre en el subárbol de sus hijos (izquierda, luego derecha). |
+| **R2** | El jefe no tiene sucesores | Primer elegible libre en el árbol del **hermano**. |
+| **R3** | El hermano no tiene sucesores libres y es elegible | El hermano asume. |
+| **R4** | No hay hermano o no se encontró candidato | Primer elegible libre en el árbol del **tío**; si el tío no tiene sucesores libres y es elegible, él asume. |
+| **R5** | Todavía no hay candidato | Subir por los ancestros: el más cercano con **dos hijos elegibles libres**; elegir el primer elegible de su subárbol. |
+| **R6** | No hay ningún libre | Buscar el **preso vivo ≤ 70 más cercano** al jefe actual (BFS por padre/hijos). |
+| **R7** | El jefe supera los 70 o va a prisión | Se aplica R1 desde su árbol. Si no hay candidatos, se limpia `is_boss` y la familia queda sin jefe. |
+
+Si ningún ámbito produce candidato, se usa como respaldo el primer elegible libre
+del árbol completo. El jefe interino preso se mantiene mientras no aparezca un
+libre elegible.
 
 ### Supuestos de diseño
 
-- El árbol de `bin/datos.csv` tiene 10 integrantes (`id` 1–10) en pre-orden `1, 2, 4, 8, 9, 5, 3, 6, 10, 7`, cubriendo nodos vivos libres, presos (`3 Fredo`, `10 Peter`), muerto (`9 Mary`) y mayor de 70 (`7 Carlo`, 72 años).
-- Al editar `is_boss = 1` sobre otro integrante, se normaliza para mantener como máximo un `is_boss = 1` y se registra `was_boss = 1` en el jefe saliente; luego se ejecuta `revisar_sucesion` para validar elegibilidad.
-- Al cargar el CSV, si el jefe marcado con `is_boss = 1` ya es inelegible (muerto, `> 70` o preso con libres disponibles), el arranque del menú dispara una revisión inicial automática.
+- `bin/datos.csv` tiene 10 integrantes (`id` 1–10), en pre-orden
+  `1, 2, 4, 8, 9, 5, 3, 6, 10, 7`, con libres, presos (`3`, `10`), un muerto
+  (`9`) y un mayor de 70 (`7`, 72 años).
+- Para hermano y tío se buscan primero sus descendientes; si no hay, el propio
+  hermano/tío puede asumir (R3).
+- `was_boss` se pone en `1` al asumir el cargo, incluido el jefe actual.
+- Al editar `is_boss = 1` sobre otro integrante se normaliza para dejar un solo
+  jefe y se valida su elegibilidad.
+- Al editar `is_boss = 0` sobre el jefe, no se reasigna automáticamente: la
+  familia queda sin jefe hasta usar la opción 6 u otro disparador.
+- Al arrancar, si el jefe cargado no es elegible, se ejecuta una revisión
+  inicial.
+- Las ediciones se mantienen en memoria; el CSV no se reescribe.
 
 ### Escenarios de prueba verificados
 
-| Escenario | Reglas | Acción | Resultado esperado |
-|---|---|---|---|
-| Línea inicial con `datos.csv` | R1, R2 | Opción 3 (Ver línea) con Vito (`id=1`) de jefe | Muestra en orden `2 Sonny`, `4 Michael`, `8 Vincent`, `5 Connie`, `6 Tom`; omite `9` (muerto), `3` y `10` (presos) y `7` (`> 70`). |
-| Muerte del jefe | R3, R6 | Editar `id=1`: `is_dead=1` | Vito pasa a `was_boss=1, is_boss=0`; asume `2 Sonny` (`id=2`). |
-| Edad > 70 del jefe | R2, R3, R6 | Editar jefe actual: `age=71` | El jefe saliente deja el cargo (`was_boss=1`); asume el siguiente libre en R1. |
-| Encarcelamiento con libres | R3, R6 | Editar jefe actual: `in_jail=1` | Si existe un libre elegible, el jefe preso entrega el cargo al primero de la línea. |
-| Todos libres fuera -> Interinato | R4, R6 | Dejar sin libres elegibles (muertos/`>70`/presos) y tumbar al jefe | Asume el primer preso vivo `<= 70` (`3 Fredo` o `10 Peter`) con `is_boss=1` e `in_jail=1`. |
-| Relevo de interino | R5, R2, R6 | Liberar a un candidato `<= 70` (`in_jail=0`, incluso con `was_boss=1`) | El interino entrega el mando automáticamente al nuevo libre elegible. |
-| Sin candidatos | R7 | Dejar a toda la familia muerta o `> 70` y revisar | Todos quedan con `is_boss=0`, se informa `[R7 - Sin sucesor]` y al recuperar a alguien reasume en la próxima revisión. |
-| Pre-orden cíclico desde rama media | R1 | Poner de jefe a `6 Tom` y provocar sucesión | Recorre `10` (si libre), salta `7` (`>70`) y da la vuelta por la raíz `1 Vito` -> `2 Sonny` -> ... |
+| Escenario | Acción | Resultado verificado |
+|---|---|---|
+| Línea inicial | Opción 3 con Vito de jefe | `2 Sonny`, `4 Michael`, `8 Vincent`, `5 Connie`, `6 Tom`; omite muerto, presos y `> 70`. |
+| Muerte del jefe | Editar `id=1` con `is_dead=1` | Asume Sonny (`id=2`). |
+| Edad > 70 | Editar `id=1` con `age=71` | Asume Sonny (`id=2`). |
+| Cárcel con libres | Editar `id=1` con `in_jail=1` | Asume Sonny (`id=2`). |
+| Jefe hijo derecho sin sucesores | Jefe `7` muerto; hermano `6` libre | Asume Tom (`id=6`) por R2. |
+| Ancestro con dos libres | Jefe `5` muerto; ancestro `1` con hijos `2` y `3` libres | Asume Sonny (`id=2`) por R5. |
+| Dos presos a distinta distancia | Jefe `1` muerto; `3` preso a distancia 1 y `4` a distancia 2 | Asume Fredo (`id=3`) por R6. |
+| Sin libres ni presos | Jefe muerto y sin candidatos | `is_boss=0` para todos; mensaje sin sucesor. |
+| Quitar `is_boss` al jefe | Editar `is_boss=0` | Queda sin jefe; no se reasigna hasta la opción 6. |
 
 ---
 
