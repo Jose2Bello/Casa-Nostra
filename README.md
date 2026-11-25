@@ -19,7 +19,7 @@ Casa-Nostra/
 ├── compilar.bat
 ├── bin/
 │   ├── .gitkeep
-│   ├── datos.csv          <- datos de prueba base
+│   ├── datos.csv          <- datos de prueba finales (10 personas)
 │   └── mafia_sucesion.exe <- se genera al compilar
 └── src/
     ├── main.cpp
@@ -198,6 +198,34 @@ ordena por id y `buscarPorId` usa búsqueda binaria.
 **Propiedad de memoria:** `ListaPersonas` es dueña de los objetos `Persona`;
 `ArbolFamilia` solo guarda punteros. `liberarArbol` libera únicamente el índice.
 Orden de liberación: primero `liberarArbol` y después `liberarLista`.
+
+---
+
+## Motor de sucesión (`sucesion.h`) y menú (`menu.h`)
+
+```cpp
+const int EDAD_MAXIMA_JEFE = 70;
+
+bool es_elegible(const Persona*);
+bool es_elegible_interino(const Persona*);
+bool es_jefe_interino(const Persona*);
+Persona* buscar_jefe(const ArbolFamilia&);
+Persona** construir_linea_sucesion(const ArbolFamilia&, int& cantidad);
+void mostrar_linea_sucesion(const ArbolFamilia&);
+Persona* buscar_sucesor(const ArbolFamilia&);
+void asignar_jefe(ArbolFamilia&, Persona* saliente, Persona* entrante);
+std::string revisar_sucesion(ArbolFamilia&);
+```
+
+El menú interactivo (`ejecutarMenu`) ofrece las opciones:
+
+1. Ver jefe actual (normal, interino en cárcel o estado R7 sin jefe).
+2. Ver árbol familiar (estructura jerárquica y los 4 recorridos).
+3. Ver línea de sucesión (elegibles libres o candidatos interinos).
+4. Buscar integrante por ID.
+5. Editar integrante (todos los campos excepto `id` e `id_boss`, con validación y disparo automático de sucesión).
+6. Forzar revisión de sucesión.
+0. Salir.
 
 ---
 
