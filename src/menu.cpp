@@ -270,13 +270,19 @@ static void editarIntegrante(ArbolFamilia& arbol) {
                     asignar_jefe(arbol, buscar_jefe(arbol), persona);
                     std::cout << "  is_boss normalizado en [id " << persona->id
                               << "].\n";
+                    disparaRevision = true;   // valida si el nuevo jefe es elegible
                 } else if (persona->is_boss) {
                     persona->is_boss = false;
                     persona->was_boss = true;
                     std::cout << "  Se retiro el cargo a [id " << persona->id
-                              << "].\n";
+                              << "]. La familia queda sin jefe; use la opcion 6 "
+                              << "para recalcular.\n";
+                    disparaRevision = false;  // respeta la edicion explicita
+                } else {
+                    std::cout << "  [id " << persona->id
+                              << "] no era el jefe actual.\n";
+                    disparaRevision = false;
                 }
-                disparaRevision = true;
                 break;
             }
             default:

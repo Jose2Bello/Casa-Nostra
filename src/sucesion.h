@@ -6,38 +6,37 @@
 #include "arbol.h"
 #include "persona.h"
 
-// Edad maxima para seguir siendo jefe, tanto libre como interino.
+// Edad maxima para seguir siendo jefe, libre o interino.
 const int EDAD_MAXIMA_JEFE = 70;
 
-// R2: elegibilidad como jefe libre (vivo, no preso y sin superar la edad).
+// Elegibilidad libre: vivo, no preso y edad <= 70.
 bool es_elegible(const Persona* persona);
 
-// R4: elegibilidad como jefe interino (vivo, preso y sin superar la edad).
+// Elegibilidad interina: vivo, preso y edad <= 70.
 bool es_elegible_interino(const Persona* persona);
 
-// El interino preso se infiere de los flags: manda y esta en la carcel.
+// Un jefe interino manda y esta en la carcel.
 bool es_jefe_interino(const Persona* persona);
 
-// Devuelve el jefe actual (is_boss) o nullptr si no hay ninguno.
+// Devuelve el jefe actual (is_boss) o nullptr si no hay.
 Persona* buscar_jefe(const ArbolFamilia& arbol);
 
-// R1: linea de sucesion (pre-orden ciclico desde el jefe) filtrada por R2.
-// Devuelve un arreglo nuevo[] con los elegibles y su cantidad por referencia.
-// El llamador es duenio del arreglo y debe liberarlo con delete[].
+// Linea de sucesion para mostrar: elegibles libres en pre-orden desde el jefe.
+// Devuelve un arreglo nuevo[] que el llamador libera con delete[].
 Persona** construir_linea_sucesion(const ArbolFamilia& arbol, int& cantidad);
 
-// Muestra la linea numerada. Si no hay libres, muestra los interinos presos.
+// Muestra la linea de sucesion. Si no hay libres, muestra los interinos.
 void mostrar_linea_sucesion(const ArbolFamilia& arbol);
 
-// Calcula el proximo jefe segun R3/R4/R5. Devuelve nullptr si el jefe actual
-// debe seguir o si no hay ningun candidato (R7).
+// Aplica R1-R6 y devuelve el proximo jefe.
+// nullptr si el jefe actual sigue elegible o si no hay candidatos.
 Persona* buscar_sucesor(const ArbolFamilia& arbol);
 
-// Pasa el cargo de `saliente` a `entrante`, actualizando is_boss y was_boss.
-// Deja exactamente un is_boss cuando `entrante` no es nullptr.
+// Traspasa el cargo de `saliente` a `entrante`.
+// El entrante queda con is_boss = true y was_boss = true.
 void asignar_jefe(ArbolFamilia& arbol, Persona* saliente, Persona* entrante);
 
-// Aplica R3/R4/R5/R6/R7 y devuelve un mensaje legible con el resultado.
+// Aplica la revision completa y devuelve un mensaje legible.
 std::string revisar_sucesion(ArbolFamilia& arbol);
 
 #endif
