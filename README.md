@@ -19,6 +19,7 @@ Casa-Nostra/
 ├── .gitignore
 ├── Makefile
 ├── compilar.bat
+├── ejecutar.bat
 ├── bin/
 │   ├── .gitkeep
 │   ├── datos.csv          <- datos de prueba finales (10 personas)
@@ -51,10 +52,20 @@ Todo el código va en `src/`; el ejecutable y los datos van en `bin/`.
 
 ### Windows
 
+Doble clic en:
+
+- `compilar.bat`: compila y deja la ventana abierta.
+- `ejecutar.bat`: compila y abre el menú.
+
+Desde una terminal:
+
 ```bat
-compilar.bat
+compilar.bat nopause
 bin\mafia_sucesion.exe
 ```
+
+> `nopause` evita la pausa final cuando se ejecuta desde una terminal.
+> No hace falta Windows Terminal: los scripts usan la consola clásica.
 
 ### Con Make
 
@@ -232,6 +243,10 @@ El menú interactivo (`ejecutarMenu`) ofrece las opciones:
 
 Al editar `age`, `is_dead` o `in_jail` se dispara la revisión automática. Si se
 pone `is_boss = 0` al jefe, la familia queda sin jefe hasta usar la opción 6.
+
+El menú se dibuja centrado, limpia la pantalla después de cada acción y usa UTF-8
+para mostrar `ñ`, `á`, `é`, etc. En Windows se configura la consola a UTF-8 al
+arrancar.
 
 ---
 
