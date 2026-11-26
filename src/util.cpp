@@ -1,6 +1,19 @@
 #include "util.h"
 
 #include <cctype>
+#include <cstdio>
+#include <cstdlib>
+#include <iostream>
+
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
 
 std::string trim(const std::string& texto) {
     int inicio = 0;
@@ -89,4 +102,74 @@ bool convertirGenero(const std::string& texto, char& valor) {
 
     valor = c;
     return true;
+}
+
+// ---------------------------------------------------------------------------
+// Consola
+// ---------------------------------------------------------------------------
+static bool esTerminal(FILE* archivo) {
+#ifdef _WIN32
+    return _isatty(_fileno(archivo)) != 0;
+#else
+    return isatty(fileno(archivo)) != 0;
+#endif
+}
+
+int longitudVisible(const std::string& texto) {
+    int longitud = 0;
+    for (int i = 0; i < static_cast<int>(texto.size()); i++) {
+        unsigned char byte = static_cast<unsigned char>(texto[i]);
+        if ((byte & 0xC0) != 0x80) longitud++;   // inicio de caracter UTF-8
+    }
+    return longitud;
+}
+
+std::string repetir(const std::string& texto, int veces) {
+    std::string resultado;
+    for (int i = 0; i < veces; i++) resultado += texto;
+    return resultado;
+}
+
+std::string centrar(const std::string& texto, int ancho) {
+    int relleno = (ancho - longitudVisible(texto)) / 2;
+    if (relleno < 0) relleno = 0;
+    return std::string(relleno, ' ') + texto;
+}
+
+void imprimirCentrado(const std::string& texto, int ancho) {
+    std::cout << centrar(texto, ancho) << "\n";
+}
+
+int anchoConsola() {
+#ifdef _WIN32
+    CONSOLE_SCREEN_BUFFER_INFO info;
+    if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info)) {
+        int ancho = info.srWindow.Right - info.srWindow.Left + 1;
+        if (ancho > 0) return ancho;
+    }
+#endif
+    return 80;
+}
+
+void limpiarPantalla() {
+    // En pruebas con tuberias no se limpia para no perder la salida.
+    if (!esTerminal(stdin) || !esTerminal(stdout)) return;
+
+    std::cout.flush();
+#ifdef _WIN32
+    std::system("cls");
+#else
+    std::system("clear");
+#endif
+}
+
+void pausar() {
+    if (!esTerminal(stdin)) return;
+
+    std::cout << "\n"
+              << centrar("Presione ENTER para continuar...", anchoConsola());
+    std::cout.flush();
+
+    std::string linea;
+    std::getline(std::cin, linea);
 }
