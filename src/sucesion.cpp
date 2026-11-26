@@ -73,7 +73,7 @@ Persona* buscar_jefe(const ArbolFamilia& arbol) {
 }
 
 // ---------------------------------------------------------------------------
-// Linea de sucesion para mostrar
+// Línea de sucesión para mostrar
 // ---------------------------------------------------------------------------
 static void llenarPreOrden(Persona* nodo, Persona** orden, int& idx,
                            int maxCantidad) {
@@ -140,7 +140,7 @@ void mostrar_linea_sucesion(const ArbolFamilia& arbol) {
     Persona** linea = construir_linea_sucesion(arbol, cantidad);
 
     if (cantidad > 0) {
-        std::cout << "  Linea de sucesion (elegibles libres, pre-orden):\n";
+        std::cout << "  Línea de sucesión (elegibles libres, pre-orden):\n";
         for (int i = 0; i < cantidad; i++) {
             std::cout << "    " << (i + 1) << ". [id " << linea[i]->id << "] "
                       << linea[i]->name << " " << linea[i]->last_name
@@ -162,7 +162,7 @@ void mostrar_linea_sucesion(const ArbolFamilia& arbol) {
             std::cout << "    " << (i + 1) << ". [id " << interinos[i]->id
                       << "] " << interinos[i]->name << " "
                       << interinos[i]->last_name << " (edad "
-                      << interinos[i]->age << ", en carcel)\n";
+                      << interinos[i]->age << ", en cárcel)\n";
         }
         delete[] interinos;
         return;
@@ -173,7 +173,7 @@ void mostrar_linea_sucesion(const ArbolFamilia& arbol) {
         jefe->age <= EDAD_MAXIMA_JEFE) {
         std::cout << "  El jefe actual [id " << jefe->id << "] " << jefe->name
                   << " " << jefe->last_name
-                  << " continua como interino desde la carcel.\n";
+                  << " continúa como interino desde la cárcel.\n";
     } else {
         std::cout << "  No hay candidatos interinos disponibles.\n";
     }
@@ -344,14 +344,14 @@ std::string revisar_sucesion(ArbolFamilia& arbol) {
         if (interino) {
             std::string mensaje = "[Interinato] " +
                                   formatearPersona(sucesor) +
-                                  " asume como jefe interino desde la carcel";
+                                  " asume como jefe interino desde la cárcel";
             if (jefe != nullptr) {
                 mensaje += " en reemplazo de " + formatearPersona(jefe);
             }
             return mensaje + ".";
         }
 
-        std::string mensaje = "[Sucesion] " + formatearPersona(sucesor) +
+        std::string mensaje = "[Sucesión] " + formatearPersona(sucesor) +
                               " asume como nuevo jefe";
         if (jefe != nullptr) {
             mensaje += " en reemplazo de " + formatearPersona(jefe);
@@ -362,7 +362,7 @@ std::string revisar_sucesion(ArbolFamilia& arbol) {
     if (jefe != nullptr && es_elegible_interino(jefe)) {
         return "[Interinato vigente] No hay sucesores libres; " +
                formatearPersona(jefe) +
-               " continua como jefe interino desde la carcel.";
+               " continúa como jefe interino desde la cárcel.";
     }
 
     if (jefe != nullptr) {
@@ -372,6 +372,6 @@ std::string revisar_sucesion(ArbolFamilia& arbol) {
                "La familia queda sin jefe.";
     }
 
-    return "[Sin sucesor] La familia continua sin jefe; no hay candidatos "
+    return "[Sin sucesor] La familia continúa sin jefe; no hay candidatos "
            "elegibles.";
 }

@@ -18,11 +18,11 @@ void mostrarPersona(const Persona* persona) {
 
     std::cout << "  id: " << persona->id
               << " | nombre: " << persona->name << " " << persona->last_name
-              << " | genero: " << persona->gender
+              << " | género: " << persona->gender
               << " | edad: " << persona->age
               << " | jefe: " << persona->id_boss << "\n";
     std::cout << "  estado: " << (persona->is_dead ? "muerto" : "vivo")
-              << " | " << (persona->in_jail ? "en la carcel" : "en libertad")
-              << " | jefe actual: " << (persona->is_boss ? "si" : "no")
-              << " | fue jefe: " << (persona->was_boss ? "si" : "no") << "\n";
+              << " | " << (persona->in_jail ? "en la cárcel" : "en libertad")
+              << " | jefe actual: " << (persona->is_boss ? "sí" : "no")
+              << " | fue jefe: " << (persona->was_boss ? "sí" : "no") << "\n";
 }
